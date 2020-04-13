@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>canvas时钟</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 30px auto;
+            border-radius: 50%;
+            background-color: black;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="mycanvas" width="800" height="800"></canvas>
+    <script>
+        let myCanvas = document.getElementById("mycanvas");
+        let ctx = myCanvas.getContext("2d");
+        myCanvas.width = 600; //document.documentElement.clientWidth * 0.4;
+        myCanvas.height = 600; //document.documentElement.clientHeight * 0.8;
+
+        class Clock {
+            constructor() {
+                //获取指针的大概长度
+                this.BL = myCanvas.width * 0.4;
+                this.centerx = myCanvas.width / 2;
+                this.centery = myCanvas.height / 2;
+            }
+            //绘制圆周坐标
+            renderNum() {
+                for (let i = 1; i < 13; i++) {
+                    let delta = (i - 3) * (2 * Math.PI) / 12;
+                    //我们需要的指针长度比圆的半径小myCanvas.width / 2 * 0.85
+                    let x = this.centerx + myCanvas.width / 2 * 0.85 * Math.cos(delta);
+                    let y = this.centery + myCanvas.height / 2 * 0.85 * Math.sin(delta);
+                    ctx.font = "bold 20px Arail";
+                    // 文字水平居中
+                    ctx.textAlign = "center";
+                    // 文字垂直居中
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(i, x, y);
+                }
+            }
+            //绘制60个圈
+            renderCircle() {
+                for (let i = 0; i < 60; i++) {
+                    ctx.beginPath(); //！注意每次都要beginPath 否则会连成一个环绕表盘的圆圈
+                    let delta = (i - 15) * (2 * Math.PI) / 60;
+                    let x = this.centerx + myCanvas.width / 2 * 0.95 * Math.cos(delta);
+                    let y = this.centery + myCanvas.height / 2 * 0.95 * Math.sin(delta);
+                    ctx.fillStyle = `rgb(${Math.random()*255},${Math.random()*255},${Math.random()*255})`;
+                    ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+            //得到系统的时间
+            createDate() {
+                this.date = new Date();
+                //时分秒
+                this.hours = ("0" + this.date.getHours() % 12).slice(-2);
+                this.minutes = ("0" + this.date.getMinutes()).slice(-2);
+                this.seconds = ("0" + this.date.getSeconds()).slice(-2);
+
+                ctx.font = "bold 18px 宋体";
+                ctx.fillStyle = `rgb(${Math.random()*255},${Math.random()*255},${Math.random()*255})`;
+                ctx.fillText(`${this.hours}:${this.minutes}:${this.seconds}`, mycanvas.width * 0.3, myCanvas
+                    .height *
+                    0.3)
+                // 秒针旋转时 分针也会动
+                // 分钟改变对应的小时改变量
+                this.hour = this.hours + this.minutes / 60;
+                // 秒钟改变对应的分钟改变量
+                this.minute = this.minutes + this.seconds / 60;
+            }
+
+
+            /*
+            save之后，可以调用Canvas的平移、放缩、旋转、错切、裁剪等操作。
+            restore：用来恢复Canvas之前保存的状态。防止save后对Canvas执行的操作对后续的绘制有影响。
+            如果不对canvas进行save以及restore，那么每一次绘图都会在上一次的基础上进行操作，最后导致错位。
+            比如说你相对于起始点每次30度递增旋转，30，60，90.
+            如果不使用save 以及 restore 就会变成30, 90, 150，每一次在前一次基础上进行了旋转。
+            save是入栈，restore是出栈
+            */
+            //绘制时针
+            drawHour() {
+                // 存储坐标系
+                ctx.save();
+                // 移动到大圆的圆心，改变坐标系
+                ctx.translate(this.centerx, this.centery);
+                let delta = this.hour * (2 * Math.PI) / 12;
+                ctx.rotate(delta);
+
+                ctx.beginPath();
+
+                // 绘制指针
+                ctx.moveTo(3, -this.BL * 0.8);
+                ctx.lineTo(0, -this.BL * 0.81);
+                ctx.lineTo(-3, -this.BL * 0.8);
+                ctx.lineTo(-this.BL * 0.04, 40);
+                ctx.lineTo(this.BL * 0.04, 40);
+
+                ctx.fillStyle = `rgb(${Math.random()*255},${Math.random()*255},${Math.random()*255})`;
+                ctx.fill()
+                // 恢复坐标系
+                ctx.restore();
+            }
+            drawMinute() {
+                ctx.save();
+                ctx.translate(this.centerx, this.centery);
+                let delta = this.minutes * Math.PI / 30;
+                ctx.rotate(delta);
+                ctx.beginPath();
+                ctx.moveTo(2, -this.BL);
+                ctx.lineTo(0, -this.BL * 1.01);
+                ctx.lineTo(-2, -this.BL);
+                ctx.lineTo(-this.BL * 0.03, 60);
+                ctx.lineTo(this.BL * 0.03, 60);
+                ctx.fillStyle = `rgb(${Math.random()*255},${Math.random()*255},${Math.random()*255})`;
+                ctx.fill()
+                ctx.restore();
+                console.log('draw')
+            }
+            drawSecond() {
+                ctx.save();
+                ctx.translate(this.centerx, this.centery);
+                let delta = this.seconds * Math.PI / 30;
+                ctx.rotate(delta);
+                ctx.beginPath();
+                ctx.moveTo(2, -this.BL);
+                ctx.lineTo(0, -this.BL * 1.1);
+                ctx.lineTo(-2, -this.BL);
+                ctx.lineTo(-this.BL * 0.02, 80);
+                ctx.lineTo(this.BL * 0.02, 80);
+                ctx.fillStyle = `rgb(${Math.random()*255},${Math.random()*255},${Math.random()*255})`;
+                ctx.fill()
+
+                //绘制一个圆圈 作为钟表的圆心
+                ctx.beginPath();
+                ctx.arc(0, 0, 8, 2 * Math.PI, false);
+                ctx.fillStyle = "orange";
+                // 填充刚绘制的圆心
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+
+
+        let clc = new Clock();
+        // ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+        // clc.renderNum();
+        // clc.renderCircle();
+        // clc.createDate();
+        // clc.drawHour();
+        // clc.drawMinute();
+        // clc.drawSecond()
+
+        setInterval(() => {
+            ctx.clearRect(0, 0, myCanvas.width, myCanvas.height);
+            clc.renderNum();
+            clc.renderCircle();
+            clc.createDate();
+            clc.drawHour();
+            clc.drawMinute();
+            clc.drawSecond();
+        }, 1000);
+    </script>
+</body>
+
+</html>
