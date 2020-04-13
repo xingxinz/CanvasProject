@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: pink;
+        }
+
+        canvas {
+            background-color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="400" height="400"></canvas>
+</body>
+
+</html>
+<script>
+    var myCanvas = document.querySelector("canvas");
+    //得到canvas标签的上下文
+    var ctx = myCanvas.getContext("2d");
+    // 创建一个数组来存放数组
+    var arr = [];
+    // 鼠标移动获取设置小球的x,y
+    myCanvas.onmousemove = function (event) {
+        var x = event.offsetX;
+        var y = event.offsetY;
+        console.log(x + " " + y);
+        var r = parseInt(Math.random() * 10) + 15;
+        // new 出一个实例
+        new Ball(x, y, r);
+    }
+
+    function Ball(x, y, r) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        // 小球x,y 的改变量
+        this.idx = parseInt(Math.random() * 5) - 2;
+        this.idy = parseInt(Math.random() * 5) - 2;
+        // 渲染小球
+        this.render();
+        // 把这个实例放在数组里面
+        arr.push(this);
+    }
+
+    Ball.prototype.render = function () {
+        // 绘制小球
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 2 * Math.PI, false);
+        ctx.fillStyle = "rgb(" + parseInt(Math.random() * 256) + "," + parseInt(Math.random() * 256) + "," +
+            parseInt(Math.random() * 256) + ")";
+        ctx.fill();
+        ctx.closePath();
+    }
+    // 更新小球
+    Ball.prototype.update = function () {
+        this.x -= this.idx;
+        this.y -= this.idy;
+        this.r--;
+        if (this.r <= 0) {
+            // 小球半径小于零的时候，移除这个小球
+            this.die();
+        }
+        this.render();
+    }
+    Ball.prototype.die = function () {
+        // 数组删除这个小球
+        arr.splice(arr.indexOf(this), 1);
+    }
+
+  
+    // 定时器定时渲染小球
+    // 每秒更新数组里的小球大小并清空画板绘制出来
+    setInterval(() => {
+         ctx.clearRect(0, 0, 400, 400);
+        ctx.font = "bold 30px Arail";
+        ctx.fillStyle = "#ffeb3b";
+        ctx.fillText("炫彩小球实例！", 0, 50);
+        for (let i = 0; i < arr.length; i++) {
+            arr[i].update();
+        }
+    }, 50);
+</script>
